@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using primeraApi.Modelos.Datos;
 using primeraApi.Modelos.Dto;
+
 
 namespace primeraApi.Controllers
 {
@@ -8,14 +10,33 @@ namespace primeraApi.Controllers
     [ApiController]
     public class VillaController : ControllerBase
     {
+
         [HttpGet]
-        public IEnumerable<VillaDto> GetVillas ()
+        public IActionResult GetVillas()
         {
-            return new List<VillaDto>
+            return Ok(VillaStore.villaList);
+        }
+        [HttpGet("id:int",Name ="GetVilla")]
+        public IActionResult GetVilla(int id)
+        {
+            var villa = VillaStore.villaList.FirstOrDefault(p => p.Id == id);
+            if (villa == null) return NotFound();
+            return Ok(villa);
+        }
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public IActionResult CrearVilla([FromBody] VillaDto nuevaVilla) 
+        {
+            if (nuevaVilla == null) return BadRequest();
+            if (nuevaVilla.Id > 0)
             {
-                new VillaDto{ Id=1, Nombre="Vista a la piscina"},
-                new VillaDto{ Id=2, Nombre="Jamaica"}
-            };
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            nuevaVilla.Id = VillaStore.villaList.OrderByDescending(p => p.Id).FirstOrDefault(nuevaVilla).Id+1;
+
+            VillaStore.villaList.Add(nuevaVilla);
+
+            return CreatedAtRoute("GetVilla", new {id=nuevaVilla.Id}, nuevaVilla);
         }
     }
 }
