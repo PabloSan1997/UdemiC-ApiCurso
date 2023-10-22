@@ -8,5 +8,6 @@ namespace primeraApi.Modelos.Dto
         [Required]
         [MaxLength(30)]
         public string Nombre { get; set; }
+        public int Ocupantes { get; set; }
     }
 }
