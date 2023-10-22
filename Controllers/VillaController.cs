@@ -27,6 +27,10 @@ namespace primeraApi.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         public IActionResult CrearVilla([FromBody] VillaDto nuevaVilla) 
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             if (nuevaVilla == null) return BadRequest();
             if (nuevaVilla.Id > 0)
             {
