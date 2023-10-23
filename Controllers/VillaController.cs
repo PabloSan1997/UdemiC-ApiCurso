@@ -11,17 +11,29 @@ namespace primeraApi.Controllers
     [ApiController]
     public class VillaController : ControllerBase
     {
+        private readonly ILogger<VillaController> _logger;
+        public VillaController(ILogger<VillaController> logger)
+        {
+
+            _logger = logger;
+
+        }
 
         [HttpGet]
         public IActionResult GetVillas()
         {
+            _logger.LogInformation("Obtener todas las villas");
             return Ok(VillaStore.villaList);
         }
         [HttpGet("id:int", Name = "GetVilla")]
         public IActionResult GetVilla(int id)
         {
             var villa = VillaStore.villaList.FirstOrDefault(p => p.Id == id);
-            if (villa == null) return NotFound();
+            if (villa == null)
+            {
+                _logger.LogError("Error con el id");
+                return NotFound();
+            };
             return Ok(villa);
         }
         [HttpPost]
