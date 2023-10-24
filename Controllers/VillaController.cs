@@ -1,7 +1,9 @@
-﻿using Azure.Core;
+﻿using AutoMapper;
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using primeraApi.Modelos;
 using primeraApi.Modelos.Datos;
 using primeraApi.Modelos.Dto;
@@ -15,24 +17,26 @@ namespace primeraApi.Controllers
     {
         private readonly ILogger<VillaController> _logger;
         private readonly AplicationDbContext _db;
-        public VillaController(ILogger<VillaController> logger, AplicationDbContext db)
+        private readonly IMapper _mapper;
+        public VillaController(ILogger<VillaController> logger, AplicationDbContext db, IMapper mapper)
         {
-
+            _mapper = mapper;
             _logger = logger;
             _db = db;
         }
 
         [HttpGet]
-        public IActionResult GetVillas()
+        public async Task<IActionResult> GetVillas()
         {
-            var villas = _db.Villas.ToList();
+            var villas = await _db.Villas.ToListAsync();
             return Ok(villas);
         }
         [HttpGet("id:int", Name = "GetVilla")]
-        public IActionResult GetVilla(int id)
+        public async Task<IActionResult> GetVilla(int id)
         {
             //var villa = VillaStore.villaList.FirstOrDefault(p => p.Id == id);
-            var villa = _db.Villas.ToList().FirstOrDefault(p => p.Id == id);
+            var data = await _db.Villas.ToListAsync();
+            var villa = data.FirstOrDefault(p => p.Id == id);
             if (villa == null)
             {
                 _logger.LogError("Error con el id");
@@ -42,7 +46,7 @@ namespace primeraApi.Controllers
         }
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public IActionResult CrearVilla([FromBody] Villa nuevaVilla)
+        public async Task<IActionResult> CrearVilla([FromBody] VillaCreateDto nuevaVilla)
         {
             if (!ModelState.IsValid)
             {
@@ -55,22 +59,17 @@ namespace primeraApi.Controllers
                 ModelState.AddModelError("NombreExiste", "La Villa con ese nombre ya existe");
                 return BadRequest(ModelState);
             }
-
-            if (nuevaVilla.Id > 0)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-
-            _db.Villas.Add(nuevaVilla);
-            _db.SaveChanges();
-            return CreatedAtRoute("GetVilla", new { id = nuevaVilla.Id }, nuevaVilla);
+            var agregar = _mapper.Map<Villa>(nuevaVilla);
+            _db.Villas.Add(agregar);
+            await _db.SaveChangesAsync();
+            return CreatedAtRoute("GetVilla", nuevaVilla);
         }
         [HttpDelete]
         [Route("borrar/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             if (id == 0)
             {
@@ -80,12 +79,12 @@ namespace primeraApi.Controllers
             if (villa == null) return NotFound();
 
             _db.Villas.Remove(villa);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             return NoContent();
         }
         [HttpPut]
         [Route("conput/{id}")]
-        public IActionResult Editar(int id, [FromBody] VillaDto editarVilla)
+        public async Task<IActionResult> Editar(int id, [FromBody] VillaUpdateDto editarVilla)
         {
             if (id == 0 || editarVilla == null) return BadRequest();
             //var villa = VillaStore.villaList.FirstOrDefault(v => v.Id == id);
@@ -96,52 +95,31 @@ namespace primeraApi.Controllers
             if (villa == null) return NotFound();
             if (!ModelState.IsValid) return BadRequest();
 
-            villa.Tarifa = editarVilla.Tarifa;
-            villa.Nombre = editarVilla.Nombre;
-            villa.MetrosCuadrados = editarVilla.MetrosCuadrados;
-            villa.Amenidad = editarVilla.Amenidad;
-            villa.Detalle = editarVilla.Detalle;
-            villa.ActualizacionFecha = DateTime.Now;
-            villa.ImagenUrl = editarVilla.ImagenUrl;
-            villa.Ocupantes = editarVilla.Ocupantes;
-
-            _db.SaveChanges();
-
+            var guardar = _mapper.Map<Villa>(editarVilla);
+            _db.Villas.Update(guardar);
+            await _db.SaveChangesAsync();
             return NoContent();
         }
         [HttpPatch]
         [Route("contpatch/{id}")]
-        public IActionResult EditarConPatch(int id, JsonPatchDocument<VillaDto> patchDto)
+        public async Task<IActionResult> EditarConPatch(int id, JsonPatchDocument<VillaUpdateDto> patchDto)
         {
             if (patchDto == null || id == 0) return NoContent();
             //var villa = VillaStore.villaList.FirstOrDefault(v => v.Id == id);
             //if (villa == null) return NotFound();
             //patchDto.ApplyTo(villa, ModelState);
-            var villa = _db.Villas.ToList().FirstOrDefault(p => p.Id == id);
+            var villa = _db.Villas.AsNoTracking().ToList().FirstOrDefault(p => p.Id == id);
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (villa == null) return BadRequest();
-            VillaDto guardar = new()
-            {
-                Tarifa = villa.Tarifa,
-                Nombre = villa.Nombre,
-                MetrosCuadrados = villa.MetrosCuadrados,
-                Amenidad = villa.Amenidad,
-                Detalle = villa.Detalle,
-                ImagenUrl = villa.ImagenUrl,
-                Ocupantes = villa.Ocupantes
-            };
-            patchDto.ApplyTo(guardar, ModelState);
 
-            villa.Tarifa = guardar.Tarifa;
-            villa.Nombre = guardar.Nombre;
-            villa.MetrosCuadrados = guardar.MetrosCuadrados;
-            villa.Amenidad = guardar.Amenidad;
-            villa.Detalle = guardar.Detalle;
-            villa.ActualizacionFecha = DateTime.Now;
-            villa.ImagenUrl = guardar.ImagenUrl;
-            villa.Ocupantes = guardar.Ocupantes;
+            var convertir = _mapper.Map<VillaUpdateDto>(villa);
+            patchDto.ApplyTo(convertir, ModelState);
+            villa = _mapper.Map<Villa>(convertir);
 
-            _db.SaveChanges();
+            _logger.LogInformation("Aqui estamos bin");
+
+            _db.Villas.Update(villa);
+            await _db.SaveChangesAsync();
             return NoContent();
         }
     }

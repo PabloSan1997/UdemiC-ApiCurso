@@ -1,6 +1,11 @@
 using primeraApi.Modelos.Datos;
 using Microsoft.EntityFrameworkCore;
+using primeraApi;
+
 var builder = WebApplication.CreateBuilder(args);
+
+//add-migration
+//update-database
 
 // Add services to the container.
 
@@ -12,6 +17,7 @@ builder.Services.AddSqlServer<AplicationDbContext>(builder.Configuration.GetConn
 {
     builder.EnableRetryOnFailure();
 });
+builder.Services.AddAutoMapper(typeof(MappingConfig));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
