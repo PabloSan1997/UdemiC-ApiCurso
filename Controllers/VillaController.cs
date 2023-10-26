@@ -91,7 +91,7 @@ namespace primeraApi.Controllers
             //if (villa == null) return NotFound();
             //villa.Nombre = editarVilla.Nombre;
             //villa.Ocupantes = editarVilla.Ocupantes;
-            var villa = _db.Villas.ToList().FirstOrDefault(p => p.Id == id);
+            var villa = _db.Villas.AsNoTracking().ToList().FirstOrDefault(p => p.Id == id);
             if (villa == null) return NotFound();
             if (!ModelState.IsValid) return BadRequest();
 
