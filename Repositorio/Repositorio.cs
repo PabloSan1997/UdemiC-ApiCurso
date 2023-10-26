@@ -52,7 +52,7 @@ namespace primeraApi.Repositorio
             return await query.ToListAsync();
         }
 
-        public async Task Remove(T entidad)
+        public async Task Eliminar(T entidad)
         {
             dbSet.Remove(entidad);
             await Grabar();

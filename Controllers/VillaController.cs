@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using primeraApi.Modelos;
 using primeraApi.Modelos.Datos;
 using primeraApi.Modelos.Dto;
-
+using primeraApi.Repositorio.IRepositorio;
 
 namespace primeraApi.Controllers
 {
@@ -16,32 +16,32 @@ namespace primeraApi.Controllers
     public class VillaController : ControllerBase
     {
         private readonly ILogger<VillaController> _logger;
-        private readonly AplicationDbContext _db;
+        private readonly IVillaRepositorio _villaRepo;
         private readonly IMapper _mapper;
-        public VillaController(ILogger<VillaController> logger, AplicationDbContext db, IMapper mapper)
+        public VillaController(ILogger<VillaController> logger, IVillaRepositorio villaRepo, IMapper mapper)
         {
             _mapper = mapper;
             _logger = logger;
-            _db = db;
+            _villaRepo = villaRepo;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetVillas()
         {
-            var villas = await _db.Villas.ToListAsync();
+            var villas = await _villaRepo.ObtenerTodo();
             return Ok(villas);
         }
         [HttpGet("id:int", Name = "GetVilla")]
         public async Task<IActionResult> GetVilla(int id)
         {
             //var villa = VillaStore.villaList.FirstOrDefault(p => p.Id == id);
-            var data = await _db.Villas.ToListAsync();
-            var villa = data.FirstOrDefault(p => p.Id == id);
+            var villa = await _villaRepo.Obtener(p => p.Id == id);
             if (villa == null)
             {
                 _logger.LogError("Error con el id");
                 return NotFound();
             };
+
             return Ok(villa);
         }
         [HttpPost]
@@ -53,15 +53,15 @@ namespace primeraApi.Controllers
                 return BadRequest(ModelState);
             }
             if (nuevaVilla == null) return BadRequest();
-            var verNombre = _db.Villas.ToList().FirstOrDefault(p => p.Nombre.ToLower() == nuevaVilla.Nombre.ToLower());
+            var verNombre = await _villaRepo.Obtener(p => p.Nombre.ToLower() == nuevaVilla.Nombre.ToLower());
+           
             if (verNombre != null)
             {
                 ModelState.AddModelError("NombreExiste", "La Villa con ese nombre ya existe");
                 return BadRequest(ModelState);
             }
             var agregar = _mapper.Map<Villa>(nuevaVilla);
-            _db.Villas.Add(agregar);
-            await _db.SaveChangesAsync();
+            await _villaRepo.Crear(agregar);
             return CreatedAtRoute("GetVilla", nuevaVilla);
         }
         [HttpDelete]
@@ -75,11 +75,11 @@ namespace primeraApi.Controllers
             {
                 return BadRequest();
             }
-            var villa = _db.Villas.ToList().FirstOrDefault(v => v.Id == id);
+            var villa = await _villaRepo.Obtener(p => p.Id == id);
             if (villa == null) return NotFound();
+            var elemento = _mapper.Map<Villa>(villa);
+            await _villaRepo.Eliminar(elemento);
 
-            _db.Villas.Remove(villa);
-            await _db.SaveChangesAsync();
             return NoContent();
         }
         [HttpPut]
@@ -91,13 +91,13 @@ namespace primeraApi.Controllers
             //if (villa == null) return NotFound();
             //villa.Nombre = editarVilla.Nombre;
             //villa.Ocupantes = editarVilla.Ocupantes;
-            var villa = _db.Villas.AsNoTracking().ToList().FirstOrDefault(p => p.Id == id);
+            var villa = await _villaRepo.Obtener(p => p.Id == id, tracked:false);
             if (villa == null) return NotFound();
             if (!ModelState.IsValid) return BadRequest();
 
             var guardar = _mapper.Map<Villa>(editarVilla);
-            _db.Villas.Update(guardar);
-            await _db.SaveChangesAsync();
+            await _villaRepo.Actualizar(guardar);
+
             return NoContent();
         }
         [HttpPatch]
@@ -108,7 +108,7 @@ namespace primeraApi.Controllers
             //var villa = VillaStore.villaList.FirstOrDefault(v => v.Id == id);
             //if (villa == null) return NotFound();
             //patchDto.ApplyTo(villa, ModelState);
-            var villa = _db.Villas.AsNoTracking().ToList().FirstOrDefault(p => p.Id == id);
+            var villa = await _villaRepo.Obtener(p => p.Id == id, tracked:false);
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (villa == null) return BadRequest();
 
@@ -118,8 +118,7 @@ namespace primeraApi.Controllers
 
             _logger.LogInformation("Aqui estamos bin");
 
-            _db.Villas.Update(villa);
-            await _db.SaveChangesAsync();
+            await _villaRepo.Actualizar(villa);
             return NoContent();
         }
     }

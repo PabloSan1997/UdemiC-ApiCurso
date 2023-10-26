@@ -6,7 +6,7 @@ namespace primeraApi.Repositorio.IRepositorio
         Task Crear(T entidad);
         Task<List<T>> ObtenerTodo(Expression<Func<T, bool>>? filtro=null);
         Task<T> Obtener(Expression<Func<T, bool>>? filtro = null, bool tracked=true);
-        Task Remove(T entidad);
+        Task Eliminar(T entidad);
         Task Grabar();
     }
 }
