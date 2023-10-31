@@ -12,8 +12,12 @@ namespace primeraApi
             CreateMap<VillaDto, Villa>();
 
             CreateMap<Villa, VillaCreateDto>().ReverseMap();
-
             CreateMap<Villa, VillaUpdateDto>().ReverseMap();
+
+            CreateMap<NumeroVilla, NumeroVillaDto>().ReverseMap();
+            CreateMap<NumeroVilla, NumeroVillaDtoCreate>().ReverseMap();
+            CreateMap<NumeroVilla, NumeroVillaDtoUpdate>().ReverseMap();
+
         }
     }
 }

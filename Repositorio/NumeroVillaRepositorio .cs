@@ -4,22 +4,21 @@ using primeraApi.Repositorio.IRepositorio;
 
 namespace primeraApi.Repositorio
 {
-    public class VillaRepositorio: Repositorio<Villa>, IVillaRepositorio
+    public class NumeroVillaRepositorio: Repositorio<NumeroVilla>, INumeroVillaRepositorio
     {
         private readonly AplicationDbContext _db;
 
-        public VillaRepositorio(AplicationDbContext db): base(db)
+        public NumeroVillaRepositorio(AplicationDbContext db): base(db)
         {
             _db = db;
         }
 
-        public async Task<Villa> Actualizar(Villa entidad)
+        public async Task<NumeroVilla> Actualizar(NumeroVilla entidad)
         {
-            entidad.ActualizacionFecha = DateTime.Now;
-            _db.Villas.Update(entidad);
+            entidad.FechaActualizacion = DateTime.Now;
+            _db.NumeroVillas.Update(entidad);
             await _db.SaveChangesAsync();
             return entidad;
         }
-        
     }
 }
