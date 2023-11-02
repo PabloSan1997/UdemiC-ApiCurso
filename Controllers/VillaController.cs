@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using primeraApi.Modelos;
@@ -25,6 +26,7 @@ namespace primeraApi.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetVillas()
         {
             var villas = await _villaRepo.ObtenerTodo();
@@ -33,6 +35,7 @@ namespace primeraApi.Controllers
             return Ok(_response);
         }
         [HttpGet("id:int", Name = "GetVilla")]
+        [Authorize]
         public async Task<ActionResult<APIResponse>> GetVilla(int id)
         {
             try
@@ -57,6 +60,7 @@ namespace primeraApi.Controllers
             return _response;
         }
         [HttpPost]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<ActionResult<APIResponse>> CrearVilla([FromBody] VillaCreateDto nuevaVilla)
         {
