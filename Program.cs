@@ -15,6 +15,7 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<INumeroVillaRepositorio, NumeroVillaRepositorio>();
 builder.Services.AddScoped<IVillaRepositorio, VillaRepositorio>();
 builder.Services.AddSqlServer<AplicationDbContext>(builder.Configuration.GetConnectionString("labasedatos"), builder =>
